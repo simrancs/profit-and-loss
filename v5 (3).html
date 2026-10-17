@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profit & Loss Master v5</title>
+    <style>
+        /* Sleek Grey/Black Dark Theme */
+        :root {
+            --bg: #09090b;          
+            --surface: #18181b;     
+            --surface-hover: #27272a; 
+            --primary: #f43f5e;     /* Rose Red accent for Profit & Loss */
+            --primary-hover: #e11d48;
+            --success: #10b981;     
+            --danger: #f43f5e;      
+            --warning: #f59e0b;     
+            --text: #fafafa;        
+            --text-muted: #a1a1aa;  
+            --border: #27272a;      
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { 
+            background-color: var(--bg); 
+            color: var(--text); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 1rem; 
+        }
+        
+        .container { 
+            background: var(--surface); 
+            border-radius: 12px; 
+            padding: 2.5rem; 
+            width: 100%; 
+            max-width: 900px; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); 
+            border: 1px solid var(--border); 
+        }
+        
+        h1 { 
+            text-align: center; 
+            margin-bottom: 0.5rem; 
+            color: var(--text); 
+            font-size: 2.2rem; 
+            letter-spacing: -0.5px;
+        }
+        
+        p.subtitle { 
+            text-align: center; 
+            color: var(--text-muted); 
+            margin-bottom: 2.5rem; 
+            font-size: 1rem; 
+        }
+        
+        #start-screen, #quiz-screen, #result-screen { display: none; }
+        #start-screen.active, #quiz-screen.active, #result-screen.active { display: block; animation: fadeIn 0.3s ease-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        button { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 0.875rem 1.5rem; 
+            border-radius: 8px; 
+            font-size: 1.05rem; 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            font-weight: 600; 
+            box-shadow: 0 4px 6px -1px rgba(244, 63, 94, 0.2);
+        }
+        
+        button:hover:not(:disabled) { 
+            background: var(--primary-hover); 
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px -1px rgba(244, 63, 94, 0.3);
+        }
+        
+        button:disabled { 
+            background: var(--surface-hover); 
+            color: var(--text-muted);
+            cursor: not-allowed; 
+            box-shadow: none;
+            transform: none;
+        }
+        
+        .start-btn { display: block; width: 100%; padding: 1.25rem; font-size: 1.25rem; margin-top: 1.5rem; letter-spacing: 1px; text-transform: uppercase;}
+
+        .settings { display: grid; grid-template-columns: 1fr; gap: 1.25rem; margin-bottom: 2.5rem; }
+        .setting-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .setting-group label { color: var(--text-muted); font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+        
+        select { 
+            background: var(--bg); 
+            border: 1px solid var(--border); 
+            color: var(--text); 
+            padding: 1rem; 
+            border-radius: 8px; 
+            outline: none; 
+            font-size: 1rem; 
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem top 50%;
+            background-size: 0.65rem auto;
+            cursor: pointer;
+        }
+        select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.2); }
+
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 0.5rem; }
+        .stat-badge { background: var(--bg); padding: 0.75rem 1.25rem; border-radius: 8px; font-weight: 600; border: 1px solid var(--border); font-size: 1.1rem; }
+        .timer-box { color: var(--danger); font-variant-numeric: tabular-nums; }
+        .streak-box { color: var(--warning); }
+        .score-box { color: var(--success); }
+
+        .pace-container { width: 100%; height: 8px; background: var(--bg); border-radius: 4px; margin-bottom: 2rem; overflow: hidden; position: relative; border: 1px solid var(--border); }
+        .pace-bar { height: 100%; width: 100%; background: var(--success); transition: width 1s linear, background-color 0.5s; }
+        .pace-bar.warning { background: var(--warning); }
+        .pace-bar.danger { background: var(--danger); }
+
+        .question-box { font-size: 1.4rem; margin-bottom: 2rem; line-height: 1.6; min-height: 80px; font-weight: 500; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+        
+        .option-btn { 
+            background: var(--surface-hover); 
+            border: 2px solid var(--border); 
+            color: var(--text); 
+            text-align: left; 
+            padding: 1.25rem; 
+            font-size: 1.15rem; 
+            border-radius: 10px;
+            box-shadow: none;
+            font-weight: 500;
+        }
+        
+        .option-btn:hover:not(:disabled) { 
+            background: var(--bg); 
+            border-color: var(--primary); 
+            transform: translateY(-2px);
+        }
+        
+        .option-btn.correct { 
+            background: rgba(16, 185, 129, 0.1); 
+            border-color: var(--success); 
+            color: var(--success);
+        }
+        
+        .option-btn.wrong { 
+            background: rgba(244, 63, 94, 0.1); 
+            border-color: var(--danger); 
+            color: var(--danger);
+        }
+
+        .concept-hint { color: var(--primary); font-size: 0.9rem; margin-bottom: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+        #ui-explanation-box { display: none; background: rgba(244, 63, 94, 0.05); border-left: 4px solid var(--primary); padding: 1.25rem; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; font-size: 1.05rem; line-height: 1.6; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);}
+        
+        .summary-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2.5rem; }
+        .stat-card { background: var(--surface-hover); padding: 1.5rem 1rem; border-radius: 10px; text-align: center; border: 1px solid var(--border); }
+        .stat-card .value { font-size: 2rem; font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
+        .stat-card .label { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;}
+
+        .review-list { max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; padding-right: 0.5rem; margin-bottom: 2rem; }
+        .review-list::-webkit-scrollbar { width: 8px; }
+        .review-list::-webkit-scrollbar-track { background: var(--bg); border-radius: 4px; }
+        .review-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .review-list::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+        
+        .review-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; border-left: 4px solid transparent; }
+        .review-item.correct { border-left-color: var(--success); }
+        .review-item.incorrect { border-left-color: var(--danger); }
+        .review-item.skipped { border-left-color: var(--text-muted); }
+        
+        .review-q { font-weight: 600; margin-bottom: 0.75rem; font-size: 1.15rem; }
+        .review-a { font-size: 1rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+        .review-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; background: var(--surface); padding: 0.75rem; border-radius: 6px; margin-top: 1rem; border: 1px solid var(--border);}
+        .speed-badge { padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600;}
+        .speed-fast { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .speed-ok { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+        .speed-slow { background: rgba(244, 63, 94, 0.15); color: var(--danger); }
+        .explanation { margin-top: 0.5rem; font-size: 0.95rem; color: var(--text); border-top: 1px dashed var(--border); padding-top: 1rem; line-height: 1.5;}
+
+        @media (max-width: 600px) {
+            .options-grid, .summary-stats { grid-template-columns: 1fr 1fr; }
+            .container { padding: 1.5rem; }
+            h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- START SCREEN -->
+        <div id="start-screen" class="active">
+            <h1>Profit & Loss Master <span style="color: var(--primary)">v5</span></h1>
+            <p class="subtitle">Procedurally generated infinite mathematics based on Kaushik Sir.</p>
+            
+            <div class="settings">
+                <div class="setting-group">
+                    <label>Learning Mode</label>
+                    <select id="quiz-mode">
+                        <option value="train" selected>Training (Instant Explanations & Adaptive)</option>
+                        <option value="exam">Exam Sprint (Strict 30s/Q Auto-Skip)</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>Duration</label>
+                    <select id="quiz-duration">
+                        <option value="180">3 Minutes (Sprint)</option>
+                        <option value="300" selected>5 Minutes (Standard Practice)</option>
+                        <option value="600">10 Minutes (Endurance)</option>
+                        <option value="999999">No Timer (Learn & Explore)</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>Topic Selection</label>
+                    <select id="quiz-concept">
+                        <option value="all" selected>🌟 ALL 12 TOPICS MIXED (Adaptive)</option>
+                        <option value="basic_calc">1. Basic Profit/Loss (Cost with Repairs)</option>
+                        <option value="find_cp_from_sp">2. Reverse Calculation (Find CP from SP)</option>
+                        <option value="quantity_price">3. CP of X = SP of Y</option>
+                        <option value="loss_equal_profit">4. SP1 (Loss) & SP2 (Profit) -> CP Average</option>
+                        <option value="condition_based">5. Conditional (Bought X% less, Sold Y more -> Profit Z%)</option>
+                        <option value="successive_discount">6. Successive Discount / Markup AB Rule</option>
+                        <option value="dishonest_dealer">7. Dishonest Dealer (Weight & Pricing cheats)</option>
+                        <option value="free_gifts">8. Free Gifts / Buy X Get Y Free</option>
+                        <option value="alligation">9. Alligation in P&L (Overall Profit)</option>
+                        <option value="cp_mark_rel">10. MP - CP = Profit + Discount</option>
+                        <option value="selling_price_base">11. Profit Calculated on Selling Price</option>
+                        <option value="equation_based">12. SP/CP Equations (e.g. Loss = SP of X)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="start-btn" id="start-button" onclick="startQuiz()">Initialize Engine</button>
+        </div>
+
+        <!-- QUIZ SCREEN -->
+        <div id="quiz-screen">
+            <div class="header-info">
+                <div class="stat-badge score-box">Score: <span id="ui-score">0</span></div>
+                <div class="stat-badge streak-box">🔥 Streak: <span id="ui-streak">0</span></div>
+                <div class="stat-badge timer-box" id="ui-timer-container"><span id="ui-timer">05:00</span></div>
+            </div>
+            
+            <div class="pace-container">
+                <div class="pace-bar" id="ui-pace-bar"></div>
+            </div>
+
+            <div class="concept-hint" id="ui-concept-hint">Concept: Profit & Loss</div>
+            <div class="question-box" id="ui-question">Loading question...</div>
+            
+            <div class="options-grid" id="ui-options"></div>
+
+            <div id="ui-explanation-box">
+                <strong style="color: var(--primary);">Concept Breakdown:</strong><br>
+                <span id="ui-exp-text"></span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-top: 1rem; gap: 1rem;">
+                <button id="skip-btn" onclick="skipQuestion()" style="background: var(--surface-hover); color: var(--text); border: 1px solid var(--border); box-shadow: none;">Skip Question</button>
+                <button id="next-btn" onclick="nextQuestion()" disabled>Next Question ➔</button>
+            </div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div id="result-screen">
+            <h1>Session Complete</h1>
+            
+            <div class="summary-stats">
+                <div class="stat-card"><div class="value" id="res-score">0</div><div class="label">Correct</div></div>
+                <div class="stat-card"><div class="value" id="res-accuracy">0%</div><div class="label">Accuracy</div></div>
+                <div class="stat-card"><div class="value" id="res-speed">0s</div><div class="label">Avg Time</div></div>
+                <div class="stat-card"><div class="value" id="res-streak" style="color: var(--warning);">0</div><div class="label">Best Streak</div></div>
+            </div>
+
+            <h3 style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; color: var(--text-muted);">Weakest Concept: <span id="res-weakest" style="color: var(--danger);">None</span></h3>
+            
+            <div class="review-list" id="review-container"></div>
+
+            <button class="start-btn" onclick="resetApp()">Return to Dashboard</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CORE MATH HELPERS ---
+        function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+        function shuffle(array) {
+            var cur = array.length, rndI;
+            while (cur > 0) {
+                rndI = Math.floor(Math.random() * cur); cur--;
+                var temp = array[cur]; array[cur] = array[rndI]; array[rndI] = temp;
+            }
+            return array;
+        }
+
+        function getUniqueOptions(opts) {
+            var unique = [];
+            for (var i = 0; i < opts.length; i++) {
+                if (unique.indexOf(opts[i]) === -1) unique.push(opts[i]);
+            }
+            return unique;
+        }
+
+        const fractions = [
+            { f: '1/2', p: 50 }, { f: '1/3', p: 33.33 }, { f: '2/3', p: 66.66 },
+            { f: '1/4', p: 25 }, { f: '3/4', p: 75 }, { f: '1/5', p: 20 },
+            { f: '2/5', p: 40 }, { f: '3/5', p: 60 }, { f: '4/5', p: 80 },
+            { f: '1/6', p: 16.66 }, { f: '1/7', p: 14.28 }, { f: '1/8', p: 12.5 }, 
+            { f: '3/8', p: 37.5 }, { f: '5/8', p: 62.5 }, { f: '1/9', p: 11.11 }, 
+            { f: '1/11', p: 9.09 }, { f: '1/12', p: 8.33 }
+        ];
+
+        // --- 12 DYNAMIC GENERATORS based on Kaushik Sir's video ---
+        var generators = {
+            
+            // 1. Basic Profit/Loss (Cost with Repairs)
+            'basic_calc': function() {
+                var buyPrice = rnd(40, 90) * 100;
+                var repair = rnd(5, 20) * 100;
+                var cp = buyPrice + repair;
+                var isProfit = rnd(0, 1) === 1;
+                var perc = rnd(1, 4) * 5; // 5%, 10%, 15%, 20%
+                var sp = isProfit ? cp + (cp * perc / 100) : cp - (cp * perc / 100);
+                
+                var trapCP = buyPrice;
+                var trapPerc = isProfit ? ((sp - buyPrice)/buyPrice * 100).toFixed(2) : ((buyPrice - sp)/buyPrice * 100).toFixed(2);
+                
+                var ans = perc + "%";
+                var q = `A man bought a scooter for ₹${buyPrice} and spent ₹${repair} on repairs. He sold it for ₹${sp}. Find his ${isProfit ? 'profit' : 'loss'} percentage.`;
+                var expText = `Total Cost Price = Buy Price + Repairs = ${buyPrice} + ${repair} = ${cp}. SP is ${sp}. Difference is ${Math.abs(sp - cp)}. Percentage = (${Math.abs(sp - cp)} / ${cp}) × 100 = ${perc}%. Do not calculate on the buy price alone!`;
+
+                var opts = [ans, trapPerc + "%", (perc + 5) + "%", (perc - 2) + "%"];
+                opts = getUniqueOptions(opts);
+                while(opts.length < 4) { opts.push(rnd(5, 30) + "%"); opts = getUniqueOptions(opts); }
+                
+                return { id: 'basic_calc', type: 'Basic (Repairs Included)', q: q, ans: ans, options: shuffle(opts), exp: expText };
+            },
+
+            // 2. Find CP from SP using fractions
+            'find_cp_from_sp': function() {
+                var f = fractions[rnd(0, fractions.length - 1)];
+                var [num, den] = f.f.split('/').map(Number);
+                var isProfit = rnd(0, 1) === 1;
+                var mult = isProfit ? (den + num) : (den - num);
+                if (mult <= 0) return generators['find_cp_from_sp'](); // safety
+                
+                var cpMultiplier = rnd(10, 50) * 10;
+                var cp = den * cpMultiplier;
+                var sp = mult * cpMultiplier;
+                
+                var ans = cp;
+                var q = `If selling an article for ₹${sp} results in a ${isProfit ? 'profit' : 'loss'} of ${f.p}%, find the Cost Price.`;
+                var expText = `${f.p}% = ${num}/${den}. Since it's a ${isProfit ? 'profit' : 'loss'}, CP is ${den} parts and SP is ${den} ${isProfit ? '+' : '-'} ${num} = ${mult} parts. ${mult} parts = ₹${sp}, so 1 part = ₹${cpMultiplier}. CP = ${den} parts = ₹${cp}.`;
+
+                var opts = [ans, sp + cpMultiplier, sp - cpMultiplier, ans + cpMultiplier*2];
+                opts = getUniqueOptions(opts);
+                while(opts.length < 4) { opts.push(opts[0] + rnd(1,5)*100); opts = getUniqueOptions(opts); }
+
+                return { id: 'find_cp_from_sp', type: 'Reverse CP Calculation', q: q, ans: ans, options: shuffle(opts), exp: expText };
+            },
+
+            // 3. CP of X = SP of Y
+            'quantity_price': function() {
+                var x = rnd(10, 30);
+                var y = rnd(10, 30);
+                if (x === y) return generators['quantity_price']();
+                
+                var isProfit = x > y;
+                var diff = Math.abs(x - y);
+                // Profit/Loss is always calculated over SP quantity (y) in this trick
+                var perc = (diff / y) * 100;
+                var ans = perc % 1 === 0 ? perc + "%" : perc.toFixed(2) + "%";
+                var trap = (diff / x) * 100;
+                var trapStr = trap % 1 === 0 ? trap + "%" : trap.toFixed(2) + "%";
+
+                var q = `The Cost Price of ${x} articles is equal to the Selling Price of ${y} articles. Find the profit or loss percentage.`;
+                var expText = `Trick: CP/SP = ${y}/${x}. So CP = ${y} and SP = ${x}. ${isProfit ? 'Profit' : 'Loss'} = ${diff}. Percentage = (${diff}/${y}) × 100 = ${ans}.`;
+
+                var opts = [ans, trapStr, (perc + 5).toFixed(2) + "%", (perc - 5).toFixed(2) + "%"];
+                opts = getUniqueOptions(opts);
+                while(opts.length < 4) { opts.push(rnd(5, 50).toFixed(2) + "%"); opts = getUniqueOptions(opts); }
+
+                return { id: 'quantity_price', type: 'CP of X = SP of Y', q: q, ans: ans, options: shuffle(opts), exp: expText };
+            },
+
+            // 4. SP1 (Loss) & SP2 (Profit) are equal -> CP Average
+            'loss_equal_profit': function() {
+                var cp = rnd(40, 100) * 10;
+                var dev = rnd(5, 25) * 10; // The profit/loss amount
+                var sp1 = cp - dev; // Loss SP
+                var sp2 = cp + dev; // Profit SP
+                
+                var newProfitPerc = rnd(1, 4) * 10; // e.g., 10%, 20%
+                var newSP = cp + (cp * newProfitPerc / 100);
+                
+                var q = `A person sells an article for ₹${sp1} incurring a loss. The loss is equal to the profit he would make if he sold it for ₹${sp2}. At what price should he sell it to gain ${newProfitPerc}%?`;
+                var expText = `Since Profit = Loss, CP is exactly in the middle of the two Selling Prices. CP = (${sp1} + ${sp2}) / 2 = ${cp}. To gain ${newProfitPerc}%, SP = ${cp} × ${(100+newProfitPerc)/100} = ₹${newSP}.`;
+
+                var opts = [newSP, newSP + 50, cp, newSP - 50];
+                opts = getUniqueOptions(opts);
+                while(opts.length < 4) { opts.push(opts[0] + rnd(1,5)*10); opts = getUniqueOptions(opts); }
+
+                return { id: 'loss_equal_profit', type: 'Profit = Loss (Average Concept)', q: q, ans: newSP, options: shuffle(opts), exp: expText };
+            },
+
+            // 5. Conditional (Bought X% less, Sold Y more)
+            'condition_based': function() {
+                var cp1 = 100;
+                var p1 = rnd(1, 4) * 10; // initial profit 10, 20, 30, 40
+                var sp1 = 100 + p1;
+                
+                var lessCP = rnd(1, 2) * 10; // bought for 10%, 20% less
+                var cp2 = 100 - lessCP;
+                
+                var p2 = rnd(1, 5) * 10; // new profit percentage
+                var sp2 = cp2 * (100 + p2) / 100;
+                
+                var diffParts = sp2 - sp1;
+                if (diffParts <= 0) return generators['condition_based'](); // Need SP to increase
+                
+                var diffMultiplier = rnd(1, 5) * 10; // 10, 20...
+                var diffAmount = diffParts * diffMultiplier;
+                
+                var ans = 100 * diffMultiplier; // Initial CP
+                var q = `A man sells an article at ${p1}% profit. If he bought it at ${lessCP}% less and sold it for ₹${diffAmount} more, he would gain ${p2}%. Find the initial Cost Price.`;
+                var expText = `Assume CP = 100 parts. Initial SP = ${sp1} parts. New CP = ${cp2} parts. New SP with ${p2}% profit on new CP = ${cp2} × ${(100+p2)/100} = ${sp2} parts. Difference in SP = ${sp2} - ${sp1} = ${diffParts} parts. ${diffParts} parts = ₹${diffAmount}, so 1 part = ₹${diffMultiplier}. Initial CP (100 parts) = ₹${ans}.`;
+
+                var opts = [ans, ans + 100*diffMultiplier, ans - 50*diffMultiplier, ans * 2];
+                opts = getUniqueOptions(opts);
+                while(opts.length < 4) { opts.push(opts[0] + rnd(1,5)*100); opts = getUniqueOptions(opts); }
+
+                return { id: 'condition_based', type: 'Conditional P&L', q: q, ans: ans, options: shuffle(opts), exp: expText };
+            },
+
+            // 6. Successive AB Rule
+            'successive_discount': function() {
+                var isMarkup = rnd(0, 1) === 1;
+                var v1 = isMarkup ? rnd(2, 6)*10 : -rnd(2, 5)*10;
+                var v2 = rnd(0, 1) === 1 ? rnd(1, 4)*10 : -rnd(1, 4)*10;
+                
+                var net = v1 + v2 + ((v1 * v2) / 100);
+                var netStr = (net > 0 ? '+' : '') + net.toFixed(2) + "%";
+                
+                var w1 = v1>0 ? 'marked up' : 'discounted';
+                var w2 = v2>0 ? 'marked up' : 'discounted';
+                
+                var q = `An article is ${w1} by ${Math.abs(v1)}% and then ${w2} by ${Math.abs(v2)}%. What is the net % change? (+ means profit/increase, - means loss/decrease)`;
+                var expText = `Use AB Rule: a + b + (ab/100). (${v1}) + (${v2}) + ((${v1} × ${v2}) / 100) = ${net.toFixed(2)}%.`;
+
+                var opts = [netStr, (v1+v2>0?'+':'')+(v1+v2)+".00%", Math.abs(net).toFixed(2)+"%", ((v1+v2-((v1*v2)/100))>0?'+':'')+(v1+v2-((v1*v2)/100)).toFixed(2)+"%"];
+                opts = getUniqueOptions(opts);
+                while(opts.length < 4) { opts.push((rnd(-50, 50)).toFixed(2) + "%"); opts = getUniqueOptions(opts); }
+
+                return { id: 'successive_discount', type: 'Successive Change (AB Rule)', q: q, ans: netStr, options: shuffle(opts), exp: expText };
+            },
+
+            // 7. Dishonest Dealer
+            'dishonest_dealer': function() {
+                var claimProfit = rnd(0, 2) * 5; // 0%, 5%, 10% profit on CP claim
+                var cheatWeight = rnd(10, 25) * 10; // gives 800g instead of 1000g (cheat = 200g)
+                var givenWeight = 1000 - cheatWeight;
+                
+                // Assume 1g = 1 rupee.
+                var cp = givenWeight; // he only spent for what he gave
+                var sp = 1000 * (100 + claimProfit) / 100; // he charged for 1000g + profit
+                
+                var profit = sp - cp;
+                var profitPerc = (profit / cp) * 100;
+                var ans = profitPerc % 1 === 0 ? profitPerc + "%" : profitPerc.toFixed(2) + "%";
+
+                var q = `A dishonest dealer professes to sell his goods at a ${claimProfit}% profit but uses a weight of ${givenWeight}g for 1 kg. Find his actual profit percentage.`;
+                var expText = `Assume 1g = ₹1. He gave ${givenWeight}g, so his Cost Price = ₹${givenWeight}. He charged for 1000g at ${claimProfit}% profit, so his Selling Price = ${1000 * (100+claimProfit)/100}. Profit = ${sp} - ${cp} = ${profit}. Profit % = (${profit} / ${cp}) × 100 = ${ans}.`;
+
+                var opts = [ans, (claimProfit + (cheatWeight/1000)*100) + "%", ((profit/sp)*100).toFixed(2) + "%", (profitPerc+5).toFixed(2) + "%"];
+                opts = getUniqueOptions(opts);
+                while(opts.length < 4) { opts.push(rnd(5, 50).toFixed(2) + "%"); opts = getUniqueOptions(opts); }
+
+                return { id: 'dishonest_dealer', type: 'Dishonest Dealer', q: q, ans: ans, options: shuffle(opts), exp: expText };
+            },
+
+            // 8. Free Gifts
+            'free_gifts': function() {
+                var buy = rnd(3, 8);
+                var free = rnd(1, 3);
+                var markup = rnd(20, 50);
+                
+                // CP per item = 100.
+                var totalItems = buy + free;
+                var cp = totalItems * 100; // Costs him for ALL items
+                var mp = 100 * (100 + markup) / 100; // Marked up price per item
+                var sp = buy * mp; // He only gets paid for the 'buy' items
+                
+                var profit = sp - cp;
+                if (profit <= 0) return generators['free_gifts'](); // Ensure a profit
+                
+                var profitPerc = (profit / cp) * 100;
+                var ans = profitPerc % 1 === 0 ? profitPerc + "%" : profitPerc.toFixed(2) + "%";
+
+                var q = `A shopkeeper marks his goods ${markup}% above CP. He offers a scheme: "Buy ${buy}, get ${free} free." Find his net profit percentage.`;
+                var expText = `Let CP of 1 item = 100. Total items given = ${totalItems}, so Total CP = ${cp}. MP = ${mp}. He gets paid only for ${buy} items. Total SP = ${buy} × ${mp} = ${sp}. Profit = ${profit}. Profit % = (${profit} / ${cp}) × 100 = ${ans}.`;
+
+                var opts = [ans, ((sp - (buy*100)) / (buy*100) * 100).toFixed(2) + "%", (markup - (free/buy)*100).toFixed(2) + "%", (profitPerc + 5).toFixed(2) + "%"];
+                opts = getUniqueOptions(opts);
+                while(opts.length < 4) { opts.push(rnd(2, 40).toFixed(2) + "%"); opts = getUniqueOptions(opts); }
+
+                return { id: 'free_gifts', type: 'Free Gifts Scheme', q: q, ans: ans, options: shuffle(opts), exp: expText };
+            },
+
+            // 9. Alligation in P&L
+            'alligation': function() {
+                var p1 = rnd(10, 20); // profit 1
+                var l2 = -rnd(5, 15); // loss 2
+                var overP = rnd(1, 8); // overall profit
+                
+                var r1 = overP - l2; // overP - (-l2) = overP + l2
+                var r2 = p1 - overP;
+                var g = gcd(r1, r2);
+                r1 /= g; r2 /= g;
+                
+                var mult = rnd(5, 20) * 100;
+                var totalQty = (r1 + r2) * mult;
+                var qty1 = r1 * mult;
+                
+                var ans = qty1;
+                var q = `A man bought goods worth ₹${totalQty}. He sold some at ${p1}% profit and the rest at ${Math.abs(l2)}% loss. If his overall profit is ${overP}%, find the value of goods sold at ${p1}% profit.`;
+                var expText = `Alligation Method: Part 1 is +${p1}, Part 2 is ${l2}. Mixture is +${overP}. Ratio = (${overP} - ${l2}) : (${p1} - ${overP}) = ${r1*g} : ${r2*g} = ${r1}:${r2}. Total parts = ${r1+r2}. Part 1 value = (${r1}/${r1+r2}) × ${totalQty} = ${ans}.`;
+
+                var opts = [ans, r2*mult, ans + mult, ans - mult];
+                opts = getUniqueOptions(opts);
+                while(opts.length < 4) { opts.push(opts[0] + rnd(1,5)*100); opts = getUniqueOptions(opts); }
+
+                return { id: 'alligation', type: 'Alligation (Overall Profit)', q: q, ans: ans, options: shuffle(opts), exp: expText };
+            },
+
+            // 10. MP - CP = Profit + Discount
+            'cp_mark_rel': function() {
+                var cp = rnd(10, 30) * 100;
+                var profit = rnd(1, 5) * 100;
+                var discount = rnd(1, 4) * 100;
+                var mp = cp + profit + discount;
+                
+                var ans = mp;
+                var q = `The Cost Price of an article is ₹${cp}. The shopkeeper earns a profit of ₹${profit} even after giving a discount of ₹${discount}. Find the Marked Price.`;
+                var expText = `Master Equation: Marked Price - Cost Price = Profit + Discount. MP - ${cp} = ${profit} + ${discount}. MP = ${cp} + ${profit+discount} = ${ans}.`;
+
+                var opts = [ans, cp + profit, cp + discount, ans + 100];
+                opts = getUniqueOptions(opts);
+                while(opts.length < 4) { opts.push(opts[0] + rnd(1,5)*50); opts = getUniqueOptions(opts); }
+
+                return { id: 'cp_mark_rel', type: 'MP & CP Relationship', q: q, ans: ans, options: shuffle(opts), exp: expText };
+            },
+
+            // 11. Profit Calculated on Selling Price
+            'selling_price_base': function() {
+                var f = fractions[rnd(0, fractions.length - 1)];
+                var [num, den] = f.f.split('/').map(Number);
+                if (den <= num) return generators['selling_price_base']();
+                
+                // If profit is on SP, SP = den, Profit = num, CP = den - num
+                var cp = den - num;
+                var actualProfitPerc = (num / cp) * 100;
+                var ans = actualProfitPerc % 1 === 0 ? actualProfitPerc + "%" : actualProfitPerc.toFixed(2) + "%";
+
+                var q = `A man calculates his profit percentage on the SELLING PRICE and finds it to be ${f.p}%. Find his actual profit percentage (calculated on CP).`;
+                var expText = `${f.p}% = ${num}/${den}. Since it's calculated on SP, SP = ${den} parts. Profit = ${num} parts. CP = SP - Profit = ${den} - ${num} = ${cp} parts. Actual Profit % = (${num}/${cp}) × 100 = ${ans}.`;
+
+                var opts = [ans, f.p + "%", ((num/(den+num))*100).toFixed(2) + "%", (actualProfitPerc + 10).toFixed(2) + "%"];
+                opts = getUniqueOptions(opts);
+                while(opts.length < 4) { opts.push(rnd(10, 80).toFixed(2) + "%"); opts = getUniqueOptions(opts); }
+
+                return { id: 'selling_price_base', type: 'Profit on Selling Price', q: q, ans: ans, options: shuffle(opts), exp: expText };
+            },
+
+            // 12. SP/CP Equations (Loss = SP of X)
+            'equation_based': function() {
+                var totalItems = rnd(20, 50);
+                var lostItems = rnd(2, 10);
+                // Loss on selling 30 = SP of 5. Loss = CP - SP -> 30CP - 30SP = 5SP -> 30CP = 35SP
+                // CP/SP = 35/30 = 7/6 -> Loss of 1 on 7 -> 14.28%
+                
+                var cpParts = totalItems + lostItems;
+                var spParts = totalItems;
+                var loss = cpParts - spParts;
+                var lossPerc = (loss / cpParts) * 100;
+                var ans = lossPerc % 1 === 0 ? lossPerc + "%" : lossPerc.toFixed(2) + "%";
+                
+                var trap = (lostItems / totalItems) * 100;
+                var trapStr = trap % 1 === 0 ? trap + "%" : trap.toFixed(2) + "%";
+
+                var q = `By selling ${totalItems} articles, a shopkeeper incurs a loss equal to the SELLING PRICE of ${lostItems} articles. Find his loss percentage.`;
+                var expText = `Loss = CP - SP. For ${totalItems} items: ${totalItems}CP - ${totalItems}SP = ${lostItems}SP. Rearranging: ${totalItems}CP = ${totalItems+lostItems}SP. Ratio CP/SP = ${totalItems+lostItems}/${totalItems}. Loss is ${lostItems} on CP of ${totalItems+lostItems}. Loss % = (${lostItems}/${totalItems+lostItems}) × 100 = ${ans}.`;
+
+                var opts = [ans, trapStr, ((lostItems/(totalItems-lostItems))*100).toFixed(2) + "%", (lossPerc + 5).toFixed(2) + "%"];
+                opts = getUniqueOptions(opts);
+                while(opts.length < 4) { opts.push(rnd(5, 40).toFixed(2) + "%"); opts = getUniqueOptions(opts); }
+
+                return { id: 'equation_based', type: 'Equation Based P&L', q: q, ans: ans, options: shuffle(opts), exp: expText };
+            }
+        };
+
+        // --- APP STATE ---
+        var state = {
+            mode: 'train', timeRemaining: 300, timerId: null,
+            questionsAttempted: 0, correctAnswers: 0, streak: 0, maxStreak: 0,
+            history: [], currentQ: null, qStartTime: 0, paceTime: 30, focus: 'all',
+            weights: {}, errorCounts: {}, isTransitioning: false
+        };
+
+        function startQuiz() {
+            try {
+                state.mode = document.getElementById('quiz-mode').value;
+                var dur = parseInt(document.getElementById('quiz-duration').value);
+                state.timeRemaining = dur;
+                state.paceTime = 30; // Strict 30s
+                state.isTransitioning = false;
+                
+                document.getElementById('ui-timer-container').style.display = (dur === 999999) ? 'none' : 'block';
+                
+                state.focus = document.getElementById('quiz-concept').value;
+                state.questionsAttempted = 0; state.correctAnswers = 0; state.streak = 0; state.maxStreak = 0;
+                state.history = [];
+                
+                state.weights = {}; state.errorCounts = {};
+                var genKeys = Object.keys(generators);
+                for(var i=0; i<genKeys.length; i++) {
+                    var k = genKeys[i];
+                    if (state.focus === 'all' || state.focus === k) {
+                        state.weights[k] = 1; 
+                        state.errorCounts[k] = 0;
+                    }
+                }
+                
+                document.getElementById('start-screen').classList.remove('active');
+                document.getElementById('quiz-screen').classList.add('active');
+                
+                if(dur !== 999999) {
+                    state.timerId = setInterval(tick, 1000);
+                }
+                generateNextQuestion();
+            } catch (e) {
+                alert("Error starting test: " + e.message);
+                console.error(e);
+            }
+        }
+
+        function tick() {
+            state.timeRemaining--;
+            updateUITimer();
+            
+            var elapsed = (performance.now() - state.qStartTime) / 1000;
+            var pacePct = Math.max(0, 100 - (elapsed / state.paceTime) * 100);
+            var bar = document.getElementById('ui-pace-bar');
+            bar.style.width = pacePct + '%';
+            
+            if (pacePct < 30) { bar.className = 'pace-bar danger'; }
+            else if (pacePct < 60) { bar.className = 'pace-bar warning'; }
+            else { bar.className = 'pace-bar'; }
+
+            // STRICT 30s TIMEOUT
+            if (state.mode === 'exam' && pacePct <= 0 && !state.isTransitioning) {
+                timeOutQuestion();
+            }
+
+            if (state.timeRemaining <= 0) endQuiz();
+        }
+
+        function updateUITimer() {
+            var m = Math.floor(state.timeRemaining / 60);
+            var s = state.timeRemaining % 60;
+            var minStr = m < 10 ? '0' + m : m;
+            var secStr = s < 10 ? '0' + s : s;
+            document.getElementById('ui-timer').innerText = minStr + ":" + secStr;
+            document.getElementById('ui-streak').innerText = state.streak;
+            document.getElementById('ui-score').innerText = state.correctAnswers;
+        }
+
+        function getWeightedRandomConcept() {
+            var genKeys = Object.keys(state.weights);
+            var totalWeight = 0;
+            for(var i=0; i<genKeys.length; i++) totalWeight += state.weights[genKeys[i]];
+            
+            var random = Math.random() * totalWeight;
+            for(var j=0; j<genKeys.length; j++) {
+                var concept = genKeys[j];
+                random -= state.weights[concept];
+                if (random <= 0) return concept;
+            }
+            return genKeys[0];
+        }
+
+        function generateNextQuestion() {
+            state.isTransitioning = false;
+            document.getElementById('ui-explanation-box').style.display = 'none';
+            document.getElementById('skip-btn').disabled = false;
+            document.getElementById('next-btn').disabled = true;
+            document.getElementById('ui-pace-bar').style.width = '100%';
+            
+            if(document.getElementById('quiz-duration').value == 999999) {
+                requestAnimationFrame(updatePaceBarLoop);
+            }
+
+            var concept = getWeightedRandomConcept();
+            state.currentQ = generators[concept]();
+            state.qStartTime = performance.now();
+
+            document.getElementById('ui-concept-hint').innerText = "Concept: " + state.currentQ.type;
+            document.getElementById('ui-question').innerText = state.currentQ.q;
+            
+            var optsContainer = document.getElementById('ui-options');
+            optsContainer.innerHTML = '';
+            
+            for(var i=0; i<state.currentQ.options.length; i++) {
+                (function(opt) {
+                    var btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.innerText = opt;
+                    btn.onclick = function() { selectOption(opt, btn); };
+                    optsContainer.appendChild(btn);
+                })(state.currentQ.options[i]);
+            }
+        }
+        
+        function updatePaceBarLoop() {
+            if(document.getElementById('quiz-screen').classList.contains('active') && document.getElementById('quiz-duration').value == 999999) {
+                var elapsed = (performance.now() - state.qStartTime) / 1000;
+                var pacePct = Math.max(0, 100 - (elapsed / state.paceTime) * 100);
+                var bar = document.getElementById('ui-pace-bar');
+                bar.style.width = pacePct + '%';
+                if (pacePct < 30) bar.className = 'pace-bar danger'; 
+                else if (pacePct < 60) bar.className = 'pace-bar warning'; 
+                else bar.className = 'pace-bar';
+                requestAnimationFrame(updatePaceBarLoop);
+            }
+        }
+
+        function selectOption(selectedOpt, btnElement) {
+            state.isTransitioning = true;
+            var timeTaken = Math.round(performance.now() - state.qStartTime);
+            var isCorrect = (selectedOpt == state.currentQ.ans);
+            
+            var buttons = document.querySelectorAll('.option-btn');
+            for(var i=0; i<buttons.length; i++) {
+                var b = buttons[i];
+                b.disabled = true;
+                if (b.innerText == state.currentQ.ans) b.classList.add('correct');
+                else if (b === btnElement && !isCorrect) b.classList.add('wrong');
+            }
+
+            state.questionsAttempted++;
+            document.getElementById('skip-btn').disabled = true;
+            document.getElementById('next-btn').disabled = false;
+
+            if (isCorrect) {
+                state.correctAnswers++;
+                state.streak++;
+                state.maxStreak = Math.max(state.maxStreak, state.streak);
+                state.weights[state.currentQ.id] = Math.max(0.5, state.weights[state.currentQ.id] - 0.2);
+            } else {
+                state.streak = 0;
+                state.weights[state.currentQ.id] += 1.5;
+                state.errorCounts[state.currentQ.id]++;
+                
+                if (state.mode === 'train') {
+                    document.getElementById('ui-explanation-box').style.display = 'block';
+                    document.getElementById('ui-exp-text').innerText = state.currentQ.exp;
+                }
+            }
+            
+            updateUITimer();
+            
+            var histItem = {
+                id: state.currentQ.id, type: state.currentQ.type, q: state.currentQ.q,
+                ans: state.currentQ.ans, exp: state.currentQ.exp,
+                userAns: selectedOpt, timeTakenMs: timeTaken, isCorrect: isCorrect, skipped: false
+            };
+            state.history.push(histItem);
+            
+            if (state.mode === 'exam') { setTimeout(generateNextQuestion, 800); }
+        }
+
+        function skipQuestion() {
+            state.isTransitioning = true;
+            var timeTaken = Math.round(performance.now() - state.qStartTime);
+            state.questionsAttempted++; 
+            state.streak = 0;
+            state.weights[state.currentQ.id] += 1.0; 
+            state.errorCounts[state.currentQ.id]++;
+            
+            var histItem = {
+                id: state.currentQ.id, type: state.currentQ.type, q: state.currentQ.q,
+                ans: state.currentQ.ans, exp: state.currentQ.exp,
+                userAns: "Skipped ⏭", timeTakenMs: timeTaken, isCorrect: false, skipped: true
+            };
+            state.history.push(histItem);
+            
+            updateUITimer();
+            generateNextQuestion();
+        }
+
+        function timeOutQuestion() {
+            state.isTransitioning = true;
+            var timeTaken = Math.round(performance.now() - state.qStartTime);
+            state.questionsAttempted++; 
+            state.streak = 0;
+            state.weights[state.currentQ.id] += 1.0; 
+            state.errorCounts[state.currentQ.id]++;
+            
+            var histItem = {
+                id: state.currentQ.id, type: state.currentQ.type, q: state.currentQ.q,
+                ans: state.currentQ.ans, exp: state.currentQ.exp,
+                userAns: "Time Out ⏱️", timeTakenMs: timeTaken, isCorrect: false, skipped: true
+            };
+            state.history.push(histItem);
+            
+            updateUITimer();
+            generateNextQuestion();
+        }
+
+        function nextQuestion() { generateNextQuestion(); }
+
+        function endQuiz() {
+            clearInterval(state.timerId);
+            document.getElementById('quiz-screen').classList.remove('active');
+            document.getElementById('result-screen').classList.add('active');
+            renderResults();
+        }
+
+        function renderResults() {
+            document.getElementById('res-score').innerText = state.correctAnswers + "/" + state.questionsAttempted;
+            var acc = state.questionsAttempted > 0 ? Math.round((state.correctAnswers / state.questionsAttempted) * 100) : 0;
+            document.getElementById('res-accuracy').innerText = acc + "%";
+            document.getElementById('res-streak').innerText = state.maxStreak;
+            
+            var totalMs = 0;
+            for(var i=0; i<state.history.length; i++) totalMs += state.history[i].timeTakenMs;
+            var avgS = state.questionsAttempted > 0 ? (totalMs / state.questionsAttempted / 1000).toFixed(1) : 0;
+            document.getElementById('res-speed').innerText = avgS + "s";
+
+            var weakest = "None", maxErr = 0;
+            var eKeys = Object.keys(state.errorCounts);
+            for (var j=0; j<eKeys.length; j++) {
+                var key = eKeys[j];
+                if (state.errorCounts[key] > maxErr) {
+                    maxErr = state.errorCounts[key];
+                    weakest = key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ');
+                }
+            }
+            document.getElementById('res-weakest').innerText = weakest + (maxErr > 0 ? " (" + maxErr + " errors)" : " - Perfect!");
+
+            var list = document.getElementById('review-container');
+            list.innerHTML = '';
+            
+            if (state.history.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:var(--text-muted);">No questions attempted.</p>';
+                return;
+            }
+
+            for(var k=0; k<state.history.length; k++) {
+                var item = state.history[k];
+                var div = document.createElement('div');
+                div.className = "review-item " + (item.skipped ? 'skipped' : (item.isCorrect ? 'correct' : 'incorrect'));
+                
+                var s = item.timeTakenMs / 1000;
+                var speedClass = 'speed-ok', speedText = 'Avg Pace';
+                if (s < 15) { speedClass = 'speed-fast'; speedText = 'Lightning Fast ⚡'; }
+                else if (s > 30) { speedClass = 'speed-slow'; speedText = 'Needs Practice 🐢'; }
+
+                var ansHtml = "Your Answer: <span style='color: " + (item.skipped ? 'var(--text-muted)' : (item.isCorrect ? 'var(--success)' : 'var(--danger)')) + "'>" + item.userAns + "</span>";
+                if (!item.isCorrect || item.skipped) {
+                    ansHtml += " | Correct Answer: <span style='color: var(--success)'>" + item.ans + "</span>";
+                }
+
+                div.innerHTML = "<div class='review-q'>Q" + (k + 1) + ": " + item.q + "</div>" +
+                                "<div class='review-a'>" + ansHtml + "</div>" +
+                                "<div class='explanation'>" + item.exp + "</div>" +
+                                "<div class='review-meta'>" +
+                                "<span>Concept: " + item.type + "</span>" +
+                                "<span><span class='speed-badge " + speedClass + "'>" + speedText + "</span> Time: " + s.toFixed(1) + "s</span>" +
+                                "</div>";
+                list.appendChild(div);
+            }
+        }
+
+        function resetApp() {
+            if(state.timerId) clearInterval(state.timerId);
+            document.getElementById('result-screen').classList.remove('active');
+            document.getElementById('quiz-screen').classList.remove('active');
+            document.getElementById('start-screen').classList.add('active');
+        }
+    </script>
+</body>
+</html>
